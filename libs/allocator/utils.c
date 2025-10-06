@@ -2,6 +2,7 @@
 
 #include <math.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <unistd.h>
 
 #include "block.h"
@@ -36,7 +37,7 @@ size_t get_memory_size_for_new_area(size_t memory_size) {
   return real_size > page_size ? memory_size + sizeof(struct Area) : real_size;
 }
 
-uint8_t crc8(const uint8_t* data, size_t length) {
+uint8_t crc8(uint8_t* data, size_t length) {
   uint8_t crc = 0x00;
   uint8_t poly = 0x07;
 
