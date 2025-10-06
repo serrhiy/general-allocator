@@ -12,6 +12,20 @@
 static struct Area* first_area = NULL;
 static struct Area* current_area = NULL;
 
+uint8_t* find_block(struct Area* area, uint8_t* ptr) {
+  for (struct Area* area_ptr = area; area != NULL; area = area->next_area) {
+    if (ptr < (uint8_t*)area_ptr ||
+        ptr >= (uint8_t*)area_ptr + area_ptr->area_size) {
+    }
+  }
+
+  if (ptr < (uint8_t*)area || ptr >= (uint8_t*)area + area->area_size) {
+    return find_block(area->next_area, ptr);
+  }
+
+  return ptr;
+}
+
 uint8_t* find_free_block(struct Area* area, size_t memory_size,
                          struct Area** output_area, struct Block** prev_block) {
   if (area == NULL) {
@@ -95,6 +109,8 @@ void* memory_alloc(size_t memory_size) {
   block_ptr->flags = 0;
   block_ptr->prev_block = prev_block;
   block_ptr->size = memory_size + sizeof(struct Block);
+  block_ptr->checksum =
+      crc8(free_block, sizeof(struct Block) - sizeof(block_ptr->checksum));
 
   current_area->total_blocks_number++;
   current_area->last_block = block_ptr;
@@ -103,6 +119,6 @@ void* memory_alloc(size_t memory_size) {
   return free_block + sizeof(struct Block);
 }
 
-// void memory_free(void* pointer) {}
+void memory_free(void* pointer) {}
 
 // void* memory_realloc(void* pointer, size_t size) { return NULL; }
