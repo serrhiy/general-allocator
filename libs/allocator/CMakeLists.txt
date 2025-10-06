@@ -1,3 +1,5 @@
-add_library(allocator )
-
-target_compile_definitions(allocator PRIVATE _GNU_SOURCE)
+add_library(allocator STATIC allocator.c utils.c)
+target_link_libraries(allocator PUBLIC m)
+target_compile_features(allocator PRIVATE c_std_23)
+set_target_properties(allocator PROPERTIES C_EXTENSIONS OFF)
+target_include_directories(allocator INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/..")
