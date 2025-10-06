@@ -5,6 +5,6 @@
 
 void* memory_alloc(size_t size);
 void memory_free(void* pointer);
-// void* memory_realloc(void* pointer, size_t size);
+void* memory_realloc(void* pointer, size_t size);
 
 #endif

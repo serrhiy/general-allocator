@@ -16,7 +16,7 @@ struct __attribute__((packed)) Block {
   size_t size;       // 4b or 8b
   uint8_t flags;     // 1b
   uint8_t checksum;  // 1b
-};  // total: 10b or 18b
+};  // total: 6b or 10b
 
 struct __attribute__((packed)) Area {
   // Do not change order and data types!!!

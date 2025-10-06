@@ -17,7 +17,7 @@ struct Block* find_block(struct Area* area, uint8_t* ptr,
   ptr -= sizeof(struct Block);
   for (struct Area* area_ptr = area; area_ptr != NULL;
        area_ptr = area->next_area) {
-    if (ptr >= (uint8_t*)area_ptr ||
+    if (ptr >= (uint8_t*)area_ptr &&
         ptr < (uint8_t*)area_ptr + area_ptr->area_size) {
       *output_area = area_ptr;
       struct Block* block = (struct Block*)ptr;
@@ -44,7 +44,7 @@ uint8_t* find_free_block(struct Area* area, size_t memory_size,
   }
 
   if (free_memory > memory_size) {
-    return (uint8_t*)area + area->payload_size - sizeof(struct Area);
+    return (uint8_t*)area + area->payload_size;
   }
 
   size_t best_size = SIZE_MAX;
@@ -64,10 +64,14 @@ uint8_t* find_free_block(struct Area* area, size_t memory_size,
     return find_free_block(area->next_area, memory_size, output_area);
   }
 
-  return block_ptr;
+  return best_block;
 }
 
 void* memory_alloc(size_t memory_size) {
+  if (memory_size == 0) {
+    return NULL;
+  }
+
   size_t real_ms = memory_size + sizeof(struct Block);
 
   struct Area* output_area = NULL;
@@ -109,9 +113,9 @@ void* memory_alloc(size_t memory_size) {
   block_ptr->checksum =
       crc8(free_block, sizeof(struct Block) - sizeof(block_ptr->checksum));
 
-  current_area->blocks_number++;
-  current_area->last_block = block_ptr;
-  current_area->payload_size += block_ptr->size;
+  output_area->blocks_number++;
+  output_area->last_block = block_ptr;
+  output_area->payload_size += block_ptr->size;
 
   return free_block + sizeof(struct Block);
 }
@@ -146,4 +150,37 @@ void memory_free(void* pointer) {
   }
 }
 
-// void* memory_realloc(void* pointer, size_t size) { return NULL; }
+void* memory_realloc(void* pointer, size_t size) {
+  struct Area* output_area = NULL;
+  struct Block* block = find_block(first_area, (uint8_t*)pointer, &output_area);
+
+  if (block == NULL || block->flags & FREE_BLOCK) {
+    return NULL;
+  }
+
+  size_t old_size = block->size;
+  if (size <= block->size - sizeof(struct Block)) {
+    if (block == output_area->last_block) {
+      block->size = size + sizeof(struct Block);
+      block->checksum =
+          crc8((uint8_t*)block, sizeof(struct Block) - sizeof(block->checksum));
+      output_area->payload_size -= old_size - block->size;
+    }
+    return pointer;
+  }
+
+  if (block == output_area->last_block) {
+    size_t new_area_payload_size =
+        output_area->payload_size - block->size + size + sizeof(struct Block);
+    if (new_area_payload_size <= output_area->area_size) {
+      block->size = size + sizeof(struct Block);
+      block->checksum =
+          crc8((uint8_t*)block, sizeof(struct Block) - sizeof(block->checksum));
+      output_area->payload_size += block->size - old_size;
+      return pointer;
+    }
+  }
+
+  memory_free(pointer);
+  return memory_alloc(size);
+}
