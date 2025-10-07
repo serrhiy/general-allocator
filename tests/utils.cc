@@ -4,7 +4,12 @@
 #include <block.h>
 
 #include <cstring>
+#include <format>
+#include <iomanip>
 #include <memory>
+#include <ranges>
+#include <sstream>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -32,4 +37,37 @@ allocator_structure_t test_structure(void* first_area) {
     result.emplace_back(area_data, std::move(blocks));
   }
   return result;
+}
+
+constexpr size_t MAX_DATA_BLOCK_SIZE = 100;
+
+std::string mem_info(const allocator_structure_t& memory_info) {
+  std::ostringstream output_stream;
+  output_stream << "User space memory has " << memory_info.size() << " areas\n";
+
+  for (const auto& [index, area_info] : std::views::enumerate(memory_info)) {
+    const auto& [area, blocks] = area_info;
+    output_stream << "#" << index
+                  << " Area{blocks_number = " << area.blocks_number
+                  << ", free_blocks_number = " << area.free_blocks_number
+                  << ", payload_size = " << area.payload_size
+                  << ", area_size = " << area.area_size << "}:\n";
+    for (const auto& [index, block] : std::views::enumerate(blocks)) {
+      output_stream << "\t#" << index << " Block{size = " << block.block.size
+                    << ", flags = " << static_cast<int>(block.block.flags)
+                    << ", checksum = " << static_cast<int>(block.block.checksum)
+                    << "\n";
+      output_stream << "\tdata: ";
+      for (size_t i = 0; i < MAX_DATA_BLOCK_SIZE; i++) {
+        output_stream << std::setw(2) << std::setfill('0')
+                      << static_cast<int>(block.block_data[i]) << ' ';
+      }
+      if (MAX_DATA_BLOCK_SIZE < block.block.size - sizeof(struct Block)) {
+        size_t diff = block.block.size - sizeof(struct Block) - MAX_DATA_BLOCK_SIZE;
+        output_stream << "... more " << diff << " bytes";
+      }
+      output_stream << '\n';
+    }
+  }
+  return output_stream.str();
 }

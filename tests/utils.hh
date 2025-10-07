@@ -5,6 +5,7 @@
 #include <block.h>
 
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -17,5 +18,7 @@ using allocator_structure_t =
     std::vector<std::pair<Area, std::vector<TestBlock>>>;
 
 allocator_structure_t test_structure(void* first_area);
+
+std::string mem_info(const allocator_structure_t& memory_info);
 
 #endif
