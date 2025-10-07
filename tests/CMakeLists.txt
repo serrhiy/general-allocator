@@ -9,5 +9,5 @@ function(addTest filename testname)
   add_test(NAME ${testname} COMMAND ${testname})
 endfunction()
 
-# addTest(allocator.cc "memory_allocation_test")
+addTest(allocator.cc "memory_allocation_test")
 addTest(manual.cc "manual_test")

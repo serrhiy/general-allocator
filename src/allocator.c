@@ -193,5 +193,3 @@ void* memory_realloc(void* pointer, size_t size) {
   memory_free(pointer);
   return new_ptr;
 }
-
-// taget 140737353842742
