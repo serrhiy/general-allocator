@@ -11,3 +11,4 @@ endfunction()
 
 addTest(allocator.cc "memory_allocation_test")
 addTest(manual.cc "manual_test")
+addTest(simple.c "simple_test")
