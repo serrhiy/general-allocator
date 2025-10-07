@@ -4,12 +4,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
-// #define FIRST_AREA_FLAG 1
-// #define LAST_AREA_FLAG 1 << 1
-#define DEFAULT_AREA 1 << 2
-#define EXTENDED_AREA 1 << 3
-
 #define FREE_BLOCK 1
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct __attribute__((packed)) Block {
   // Do not change order and data types!!!
@@ -28,5 +27,9 @@ struct __attribute__((packed)) Area {
   struct Area* prev_area;       // 4b or 8b
   struct Block* last_block;     // 4b or 8b
 };  // total: 24b or 44b
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

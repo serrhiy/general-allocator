@@ -16,7 +16,7 @@ struct Block* find_block(struct Area* area, uint8_t* ptr,
                          struct Area** output_area) {
   ptr -= sizeof(struct Block);
   for (struct Area* area_ptr = area; area_ptr != NULL;
-       area_ptr = area->next_area) {
+       area_ptr = area_ptr->next_area) {
     if (ptr >= (uint8_t*)area_ptr &&
         ptr < (uint8_t*)area_ptr + area_ptr->area_size) {
       *output_area = area_ptr;
@@ -143,6 +143,7 @@ void memory_free(void* pointer) {
         first_area = first_area->next_area;
       } else {
         first_area = NULL;
+        current_area = NULL;
       }
     }
 
@@ -151,6 +152,11 @@ void memory_free(void* pointer) {
 }
 
 void* memory_realloc(void* pointer, size_t size) {
+  if (size == 0) {
+    memory_free(pointer);
+    return NULL;
+  }
+
   struct Area* output_area = NULL;
   struct Block* block = find_block(first_area, (uint8_t*)pointer, &output_area);
 
@@ -160,12 +166,10 @@ void* memory_realloc(void* pointer, size_t size) {
 
   size_t old_size = block->size;
   if (size <= block->size - sizeof(struct Block)) {
-    if (block == output_area->last_block) {
-      block->size = size + sizeof(struct Block);
-      block->checksum =
-          crc8((uint8_t*)block, sizeof(struct Block) - sizeof(block->checksum));
-      output_area->payload_size -= old_size - block->size;
-    }
+    block->size = size + sizeof(struct Block);
+    block->checksum =
+        crc8((uint8_t*)block, sizeof(struct Block) - sizeof(block->checksum));
+    output_area->payload_size -= old_size - block->size;
     return pointer;
   }
 
@@ -181,6 +185,13 @@ void* memory_realloc(void* pointer, size_t size) {
     }
   }
 
+  void* new_ptr = memory_alloc(size);
+  if (new_ptr == NULL) {
+    return NULL;
+  }
+  memcpy(new_ptr, pointer, block->size - sizeof(struct Block));
   memory_free(pointer);
-  return memory_alloc(size);
+  return new_ptr;
 }
+
+// taget 140737353842742
